@@ -29,45 +29,56 @@
     input {
       font-size: 24px;
       padding: 12px;
-      width: 400px;
+      width: 500px;
       border-radius: 8px;
       border: none;
       margin-bottom: 30px;
     }
     table {
-      width: 90%;
+      width: 95%;
       margin: 0 auto;
       border-collapse: collapse;
       margin-top: 20px;
-      font-size: 18px;
+      font-size: 16px;
     }
     th, td {
       padding: 10px;
       border-bottom: 1px solid #555;
+      vertical-align: middle;
     }
     th {
       background-color: #FFD700;
       color: #2F2F3D;
     }
+    img.produto-img {
+      width: 80px;
+      height: 80px;
+      object-fit: contain;
+      border-radius: 8px;
+      background-color: #fff;
+    }
   </style>
 </head>
 <body>
   <header>
-    <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo NaContatoTem">
+    <img src="https://www.nacontatotem.com.br/media/logo/stores/1/logo-nacontatotem.png" alt="Logo NaContatoTem">
   </header>
   <main>
     <h1>Consulta de Estoques - Equipe Interna</h1>
-    <input type="text" id="busca" placeholder="Digite o nome, SKU ou marca...">
+    <input type="text" id="busca" placeholder="Digite o nome, SKU, marca ou código de barras...">
     <table id="tabelaResultados">
       <thead>
         <tr>
+          <th>Foto</th>
           <th>SKU</th>
-          <th>Produto</th>
+          <th>Descrição</th>
           <th>Marca</th>
-          <th>WeWork - Loja</th>
-          <th>WeWork - CD</th>
-          <th>NaContatoTem - Loja</th>
-          <th>NaContatoTem - CD</th>
+          <th>Código de Barras</th>
+          <th>Loja AQA</th>
+          <th>Loja OUT</th>
+          <th>CD Américo</th>
+          <th>WeWork</th>
+          <th>FIV5 (ES)</th>
         </tr>
       </thead>
       <tbody id="resultado"></tbody>
@@ -79,40 +90,52 @@
         sku: "7891234567890",
         nome: "Refletor LED FITE 50W",
         marca: "ALI",
-        ww_loja: 12,
-        ww_cd: 30,
-        nct_loja: 8,
-        nct_cd: 20
+        gtin: "7891234567890",
+        imagem: "https://via.placeholder.com/80x80?text=FITE",
+        loja_aqa: 5,
+        loja_out: 2,
+        cd_americo: 12,
+        wework: 8,
+        fiv5: 3
       },
       {
         sku: "7890000000001",
         nome: "Plafon Redondo 18W Branco",
         marca: "ALI",
-        ww_loja: 5,
-        ww_cd: 12,
-        nct_loja: 0,
-        nct_cd: 7
+        gtin: "7890000000001",
+        imagem: "https://via.placeholder.com/80x80?text=Plafon",
+        loja_aqa: 0,
+        loja_out: 6,
+        cd_americo: 9,
+        wework: 2,
+        fiv5: 0
       }
     ];
+
     const inputBusca = document.getElementById("busca");
     const resultado = document.getElementById("resultado");
 
-    inputBusca.addEventListener("input", function () {
+    inputBusca.addEventListener("input", function() {
       const busca = inputBusca.value.toLowerCase();
       resultado.innerHTML = "";
-      produtos.filter(p =>
-        p.sku.includes(busca) ||
-        p.nome.toLowerCase().includes(busca) ||
-        p.marca.toLowerCase().includes(busca)
+
+      produtos.filter(p => 
+        p.sku.includes(busca) || 
+        p.nome.toLowerCase().includes(busca) || 
+        p.marca.toLowerCase().includes(busca) || 
+        p.gtin.includes(busca)
       ).forEach(p => {
         const linha = `<tr>
+          <td><img src="${p.imagem}" alt="${p.nome}" class="produto-img"></td>
           <td>${p.sku}</td>
           <td>${p.nome}</td>
           <td>${p.marca}</td>
-          <td>${p.ww_loja}</td>
-          <td>${p.ww_cd}</td>
-          <td>${p.nct_loja}</td>
-          <td>${p.nct_cd}</td>
+          <td>${p.gtin}</td>
+          <td>${p.loja_aqa}</td>
+          <td>${p.loja_out}</td>
+          <td>${p.cd_americo}</td>
+          <td>${p.wework}</td>
+          <td>${p.fiv5}</td>
         </tr>`;
         resultado.innerHTML += linha;
       });
