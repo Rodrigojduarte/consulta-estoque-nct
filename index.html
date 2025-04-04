@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>Consulta de Estoques - Equipe</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Poppins', sans-serif;
+      background-color: #2F2F3D;
+      color: white;
+      text-align: center;
+    }
+    header {
+      background-color: #FF7F00;
+      padding: 20px;
+    }
+    header img {
+      height: 60px;
+    }
+    main {
+      padding: 40px;
+    }
+    h1 {
+      font-size: 36px;
+      margin-bottom: 30px;
+    }
+    input {
+      font-size: 24px;
+      padding: 12px;
+      width: 400px;
+      border-radius: 8px;
+      border: none;
+      margin-bottom: 30px;
+    }
+    table {
+      width: 90%;
+      margin: 0 auto;
+      border-collapse: collapse;
+      margin-top: 20px;
+      font-size: 18px;
+    }
+    th, td {
+      padding: 10px;
+      border-bottom: 1px solid #555;
+    }
+    th {
+      background-color: #FFD700;
+      color: #2F2F3D;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo NaContatoTem">
+  </header>
+  <main>
+    <h1>Consulta de Estoques - Equipe Interna</h1>
+    <input type="text" id="busca" placeholder="Digite o nome, SKU ou marca...">
+    <table id="tabelaResultados">
+      <thead>
+        <tr>
+          <th>SKU</th>
+          <th>Produto</th>
+          <th>Marca</th>
+          <th>WeWork - Loja</th>
+          <th>WeWork - CD</th>
+          <th>NaContatoTem - Loja</th>
+          <th>NaContatoTem - CD</th>
+        </tr>
+      </thead>
+      <tbody id="resultado"></tbody>
+    </table>
+  </main>
+  <script>
+    const produtos = [
+      {
+        sku: "7891234567890",
+        nome: "Refletor LED FITE 50W",
+        marca: "ALI",
+        ww_loja: 12,
+        ww_cd: 30,
+        nct_loja: 8,
+        nct_cd: 20
+      },
+      {
+        sku: "7890000000001",
+        nome: "Plafon Redondo 18W Branco",
+        marca: "ALI",
+        ww_loja: 5,
+        ww_cd: 12,
+        nct_loja: 0,
+        nct_cd: 7
+      }
+    ];
+    const inputBusca = document.getElementById("busca");
+    const resultado = document.getElementById("resultado");
+
+    inputBusca.addEventListener("input", function () {
+      const busca = inputBusca.value.toLowerCase();
+      resultado.innerHTML = "";
+      produtos.filter(p =>
+        p.sku.includes(busca) ||
+        p.nome.toLowerCase().includes(busca) ||
+        p.marca.toLowerCase().includes(busca)
+      ).forEach(p => {
+        const linha = `<tr>
+          <td>${p.sku}</td>
+          <td>${p.nome}</td>
+          <td>${p.marca}</td>
+          <td>${p.ww_loja}</td>
+          <td>${p.ww_cd}</td>
+          <td>${p.nct_loja}</td>
+          <td>${p.nct_cd}</td>
+        </tr>`;
+        resultado.innerHTML += linha;
+      });
+    });
+  </script>
+</body>
+</html>
