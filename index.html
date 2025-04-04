@@ -3,7 +3,6 @@
 <head>
   <meta charset="UTF-8">
   <title>Consulta de Estoques - Equipe</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
   <style>
     body {
@@ -21,45 +20,41 @@
       height: 60px;
     }
     main {
-      padding: 40px;
+      padding: 20px;
     }
     h1 {
-      font-size: 24px;
+      font-size: 28px;
       margin-bottom: 20px;
     }
-    #busca-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 10px;
-    }
-    input[type="text"] {
+    input {
       font-size: 20px;
       padding: 10px;
-      width: 100%;
+      width: 80%;
       max-width: 500px;
       border-radius: 8px;
       border: none;
+      margin-bottom: 20px;
     }
     button {
-      padding: 8px 16px;
+      margin-left: 10px;
+      padding: 10px 16px;
       font-size: 16px;
-      background-color: #FF7F00;
+      border-radius: 8px;
       border: none;
-      border-radius: 6px;
-      cursor: pointer;
+      background-color: #FF7F00;
       color: white;
+      cursor: pointer;
     }
     table {
       width: 100%;
-      max-width: 1000px;
-      margin: 20px auto;
       border-collapse: collapse;
+      margin-top: 20px;
       font-size: 14px;
     }
     th, td {
-      padding: 10px;
+      padding: 8px;
       border-bottom: 1px solid #555;
+      vertical-align: middle;
     }
     th {
       background-color: #FFD700;
@@ -72,26 +67,18 @@
       border-radius: 8px;
       background-color: #fff;
     }
-    #status {
+    #mensagem {
       margin-top: 20px;
       font-size: 16px;
-      color: #FFD700;
+      color: #ccc;
     }
     @media (max-width: 768px) {
-      table, thead, tbody, th, td, tr {
-        display: block;
-        width: 100%;
+      input, button {
+        width: 90%;
+        font-size: 16px;
       }
-      tr {
-        margin-bottom: 15px;
-        border: 1px solid #555;
-        padding: 10px;
-      }
-      td {
-        text-align: left;
-      }
-      th {
-        display: none;
+      table, th, td {
+        font-size: 12px;
       }
     }
   </style>
@@ -102,11 +89,9 @@
   </header>
   <main>
     <h1>Consulta de Estoques - Equipe Interna</h1>
-    <div id="busca-container">
-      <input type="text" id="busca" placeholder="Digite nome, SKU, marca ou código de barras...">
-      <button onclick="limparBusca()">Limpar</button>
-    </div>
-    <div id="status"></div>
+    <input type="text" id="busca" placeholder="Digite o nome, SKU, marca ou código de barras...">
+    <button onclick="limparBusca()">Limpar</button>
+    <div id="mensagem"></div>
     <table id="tabelaResultados">
       <thead>
         <tr>
@@ -119,7 +104,7 @@
           <th>Loja OUT</th>
           <th>CD Américo</th>
           <th>WeWork</th>
-          <th>Showroom AQA</th>
+          <th>FIV5 (ES)</th>
         </tr>
       </thead>
       <tbody id="resultado"></tbody>
@@ -128,54 +113,51 @@
   <script>
     const inputBusca = document.getElementById("busca");
     const resultado = document.getElementById("resultado");
-    const status = document.getElementById("status");
+    const mensagem = document.getElementById("mensagem");
+
+    inputBusca.addEventListener("input", async function () {
+      const busca = inputBusca.value.trim();
+      resultado.innerHTML = "";
+      mensagem.textContent = "";
+
+      if (busca.length < 2) return;
+
+      mensagem.textContent = "Carregando...";
+
+      try {
+        const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
+        const data = await response.json();
+
+        if (Array.isArray(data) && data.length) {
+          data.forEach(p => {
+            const linha = `<tr>
+              <td><img src="https://via.placeholder.com/80x80?text=Img" class="produto-img"></td>
+              <td>${p.sku}</td>
+              <td>${p.descricao}</td>
+              <td>${p.marca}</td>
+              <td>${p.gtin}</td>
+              <td>${p.estoque_nct}</td>
+              <td>${p.estoque_out}</td>
+              <td>${p.estoque_cd}</td>
+              <td>${p.estoque_ww}</td>
+              <td>${p.estoque_showroom_aqa}</td>
+            </tr>`;
+            resultado.innerHTML += linha;
+          });
+          mensagem.textContent = "";
+        } else {
+          mensagem.textContent = "Nenhum resultado encontrado.";
+        }
+      } catch (err) {
+        mensagem.textContent = "Erro ao buscar dados.";
+      }
+    });
 
     function limparBusca() {
       inputBusca.value = "";
       resultado.innerHTML = "";
-      status.innerText = "";
+      mensagem.textContent = "";
     }
-
-    let timeout = null;
-    inputBusca.addEventListener("input", () => {
-      clearTimeout(timeout);
-      resultado.innerHTML = "";
-      status.innerText = "";
-      const busca = inputBusca.value.trim();
-      if (!busca) return;
-
-      timeout = setTimeout(() => {
-        status.innerText = "Carregando...";
-        fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`)
-          .then(res => res.json())
-          .then(data => {
-            resultado.innerHTML = "";
-            status.innerText = "";
-            if (Array.isArray(data) && data.length > 0) {
-              data.forEach(p => {
-                resultado.innerHTML += `
-                  <tr>
-                    <td><img src="https://via.placeholder.com/60x60?text=IMG" class="produto-img"></td>
-                    <td>${p.sku}</td>
-                    <td>${p.descricao}</td>
-                    <td>${p.marca}</td>
-                    <td>${p.gtin}</td>
-                    <td>${p.estoque_nct}</td>
-                    <td>${p.estoque_out}</td>
-                    <td>${p.estoque_cd}</td>
-                    <td>${p.estoque_ww}</td>
-                    <td>${p.estoque_showroom_aqa}</td>
-                  </tr>`;
-              });
-            } else {
-              status.innerText = "Nenhum resultado encontrado.";
-            }
-          })
-          .catch(() => {
-            status.innerText = "Erro ao buscar dados.";
-          });
-      }, 500); // debounce
-    });
   </script>
 </body>
 </html>
