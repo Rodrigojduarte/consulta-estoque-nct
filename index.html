@@ -20,11 +20,11 @@
       height: 60px;
     }
     main {
-      padding: 20px;
+      padding: 40px;
     }
     h1 {
-      font-size: 28px;
-      margin-bottom: 20px;
+      font-size: 36px;
+      margin-bottom: 30px;
     }
     input {
       font-size: 20px;
@@ -36,17 +36,20 @@
       margin-bottom: 20px;
     }
     button {
-      margin-left: 10px;
       padding: 10px 16px;
-      font-size: 16px;
-      border-radius: 8px;
+      font-size: 14px;
+      margin-left: 10px;
+      border-radius: 6px;
       border: none;
-      background-color: #FF7F00;
-      color: white;
       cursor: pointer;
+      background-color: #FFD700;
+      color: #2F2F3D;
+      font-weight: 600;
     }
     table {
       width: 100%;
+      max-width: 95%;
+      margin: 0 auto;
       border-collapse: collapse;
       margin-top: 20px;
       font-size: 14px;
@@ -54,31 +57,33 @@
     th, td {
       padding: 8px;
       border-bottom: 1px solid #555;
-      vertical-align: middle;
     }
     th {
       background-color: #FFD700;
       color: #2F2F3D;
     }
     img.produto-img {
-      width: 60px;
-      height: 60px;
+      width: 70px;
+      height: 70px;
       object-fit: contain;
-      border-radius: 8px;
       background-color: #fff;
+      border-radius: 6px;
     }
     #mensagem {
       margin-top: 20px;
       font-size: 16px;
-      color: #ccc;
+      font-style: italic;
     }
     @media (max-width: 768px) {
-      input, button {
-        width: 90%;
-        font-size: 16px;
+      input {
+        width: 95%;
       }
-      table, th, td {
+      table {
         font-size: 12px;
+      }
+      img.produto-img {
+        width: 50px;
+        height: 50px;
       }
     }
   </style>
@@ -89,7 +94,7 @@
   </header>
   <main>
     <h1>Consulta de Estoques - Equipe Interna</h1>
-    <input type="text" id="busca" placeholder="Digite o nome, SKU, marca ou código de barras...">
+    <input type="text" id="busca" placeholder="Digite nome, SKU, marca ou GTIN...">
     <button onclick="limparBusca()">Limpar</button>
     <div id="mensagem"></div>
     <table id="tabelaResultados">
@@ -99,64 +104,92 @@
           <th>SKU</th>
           <th>Descrição</th>
           <th>Marca</th>
-          <th>Código de Barras</th>
+          <th>GTIN</th>
           <th>Loja AQA</th>
           <th>Loja OUT</th>
           <th>CD Américo</th>
           <th>WeWork</th>
-          <th>FIV5 (ES)</th>
+          <th>Showroom AQA</th>
         </tr>
       </thead>
       <tbody id="resultado"></tbody>
     </table>
   </main>
   <script>
-    const inputBusca = document.getElementById("busca");
-    const resultado = document.getElementById("resultado");
-    const mensagem = document.getElementById("mensagem");
+    const input = document.getElementById('busca');
+    const resultado = document.getElementById('resultado');
+    const mensagem = document.getElementById('mensagem');
 
-    inputBusca.addEventListener("input", async function () {
-      const busca = inputBusca.value.trim();
-      resultado.innerHTML = "";
-      mensagem.textContent = "";
+    input.addEventListener('input', async () => {
+      const busca = input.value.trim().toLowerCase();
+      resultado.innerHTML = '';
+      mensagem.textContent = '';
 
       if (busca.length < 2) return;
 
-      mensagem.textContent = "Carregando...";
+      mensagem.textContent = 'Carregando...';
 
       try {
-        const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
-        const data = await response.json();
+        const res = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
+        const dados = await res.json();
 
-        if (Array.isArray(data) && data.length) {
-          data.forEach(p => {
-            const linha = `<tr>
-              <td><img src="https://via.placeholder.com/80x80?text=Img" class="produto-img"></td>
-              <td>${p.sku}</td>
-              <td>${p.descricao}</td>
-              <td>${p.marca}</td>
-              <td>${p.gtin}</td>
-              <td>${p.estoque_nct}</td>
-              <td>${p.estoque_out}</td>
-              <td>${p.estoque_cd}</td>
-              <td>${p.estoque_ww}</td>
-              <td>${p.estoque_showroom_aqa}</td>
-            </tr>`;
-            resultado.innerHTML += linha;
-          });
-          mensagem.textContent = "";
-        } else {
-          mensagem.textContent = "Nenhum resultado encontrado.";
+        if (!Array.isArray(dados)) {
+          mensagem.textContent = 'Nenhum resultado encontrado.';
+          return;
         }
-      } catch (err) {
-        mensagem.textContent = "Erro ao buscar dados.";
+
+        // trata busca inteligente
+        const palavras = busca.split(/\s+/);
+        const isNumerico = /^\d+$/.test(busca) && busca.length < 13;
+
+        const filtrados = dados.filter(p => {
+          const descricao = (p.descricao || '').toLowerCase();
+          const marca = (p.marca || '').toLowerCase();
+          const gtin = p.gtin || '';
+          const sku = p.sku || '';
+
+          if (isNumerico) return sku.includes(busca);
+
+          return (
+            palavras.every(palavra => descricao.includes(palavra)) ||
+            marca.includes(busca) ||
+            gtin.includes(busca) ||
+            sku.includes(busca)
+          );
+        });
+
+        if (filtrados.length === 0) {
+          mensagem.textContent = 'Nenhum resultado encontrado.';
+          return;
+        }
+
+        mensagem.textContent = '';
+        filtrados.forEach(p => {
+          const linha = `<tr>
+            <td><img src="https://via.placeholder.com/70x70?text=IMG" class="produto-img"></td>
+            <td>${p.sku}</td>
+            <td>${p.descricao}</td>
+            <td>${p.marca}</td>
+            <td>${p.gtin}</td>
+            <td>${p.estoque_nct || 0}</td>
+            <td>${p.estoque_out || 0}</td>
+            <td>${p.estoque_cd || 0}</td>
+            <td>${p.estoque_ww || 0}</td>
+            <td>${p.estoque_showroom_aqa || 0}</td>
+          </tr>`;
+          resultado.innerHTML += linha;
+        });
+
+      } catch (erro) {
+        mensagem.textContent = 'Erro ao buscar os dados';
+        console.error(erro);
       }
     });
 
     function limparBusca() {
-      inputBusca.value = "";
-      resultado.innerHTML = "";
-      mensagem.textContent = "";
+      input.value = '';
+      resultado.innerHTML = '';
+      mensagem.textContent = '';
     }
   </script>
 </body>
