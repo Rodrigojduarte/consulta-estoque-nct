@@ -2,165 +2,146 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>Consulta de Estoques - Equipe</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+  <title>Consulta de Estoques - Equipe Interna</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Poppins', sans-serif;
-      background-color: #2F2F3D;
+      background: #2e2e3a;
+      font-family: Arial, sans-serif;
       color: white;
+      margin: 0;
+    }
+
+    header {
+      background: #f90;
+      padding: 20px;
       text-align: center;
     }
-    header {
-      background-color: #FF7F00;
-      padding: 20px;
-    }
-    header img {
-      height: 60px;
-    }
-    main {
-      padding: 40px 20px;
-    }
+
     h1 {
-      font-size: 26px;
-      margin-bottom: 20px;
+      text-align: center;
+      margin-top: 30px;
     }
-    input {
-      font-size: 20px;
-      padding: 12px;
-      width: 90%;
-      max-width: 500px;
-      border-radius: 8px;
-      border: none;
-      margin-bottom: 20px;
+
+    #busca {
+      display: block;
+      margin: 20px auto;
+      padding: 10px;
+      font-size: 18px;
+      width: 300px;
     }
-    button {
-      margin-left: 10px;
-      padding: 12px 18px;
-      font-size: 16px;
+
+    #limpar {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background: #f90;
       border: none;
-      border-radius: 6px;
-      background-color: #FF7F00;
       color: white;
+      font-weight: bold;
       cursor: pointer;
     }
+
     table {
-      width: 100%;
-      max-width: 1000px;
-      margin: 0 auto;
+      margin: 30px auto;
+      width: 90%;
       border-collapse: collapse;
-      margin-top: 20px;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 8px;
-      border-bottom: 1px solid #555;
-      vertical-align: middle;
-    }
-    th {
-      background-color: #FFD700;
-      color: #2F2F3D;
-    }
-    img.produto-img {
-      width: 60px;
-      height: 60px;
-      object-fit: contain;
+      background: #fff;
+      color: #000;
       border-radius: 8px;
-      background-color: #fff;
+      overflow: hidden;
     }
-    #mensagem {
-      margin-top: 20px;
-      font-size: 18px;
+
+    th, td {
+      padding: 12px;
+      text-align: center;
+      border: 1px solid #ccc;
+    }
+
+    th {
+      background: #ffcc00;
+    }
+
+    tr:nth-child(even) {
+      background: #f2f2f2;
+    }
+
+    tr:hover {
+      background: #ddd;
     }
   </style>
 </head>
 <body>
+
   <header>
-    <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo NaContatoTem">
+    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/NCT_logo.svg/512px-NCT_logo.svg.png" alt="NCT" height="60">
   </header>
-  <main>
-    <h1>Consulta de Estoques - Equipe Interna</h1>
-    <input type="text" id="busca" placeholder="Digite o nome, SKU, marca ou código de barras...">
-    <button onclick="limparBusca()">Limpar</button>
-    <div id="mensagem"></div>
-    <table id="tabelaResultados">
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Descrição</th>
-          <th>Marca</th>
-          <th>GTIN</th>
-          <th>Loja AQA</th>
-          <th>Loja OUT</th>
-          <th>CD Américo</th>
-          <th>WeWork</th>
-          <th>Showroom AQA</th>
-        </tr>
-      </thead>
-      <tbody id="resultado"></tbody>
-    </table>
-  </main>
+
+  <h1>Consulta de Estoques - Equipe Interna</h1>
+
+  <input type="text" id="busca" placeholder="Digite o SKU ou GTIN" />
+  <button id="limpar">Limpar</button>
+
+  <table>
+    <thead>
+      <tr>
+        <th>SKU</th>
+        <th>Descrição</th>
+        <th>Marca</th>
+        <th>GTIN</th>
+        <th>Loja AQA</th>
+        <th>Loja OUT</th>
+        <th>CD Américo</th>
+        <th>WeWork</th>
+        <th>Showroom AQA</th>
+      </tr>
+    </thead>
+    <tbody id="tabela-corpo"></tbody>
+  </table>
+
   <script>
-    const inputBusca = document.getElementById("busca");
-    const resultado = document.getElementById("resultado");
-    const mensagem = document.getElementById("mensagem");
+    const input = document.getElementById("busca");
+    const limparBtn = document.getElementById("limpar");
+    const tabela = document.getElementById("tabela-corpo");
 
-    inputBusca.addEventListener("input", async function () {
-      const busca = inputBusca.value.trim();
-      if (busca.length < 3) {
-        resultado.innerHTML = "";
-        mensagem.textContent = "Digite ao menos 3 caracteres para buscar...";
-        return;
-      }
-
-      mensagem.textContent = "Carregando...";
-      resultado.innerHTML = "";
-
-      try {
-        const resposta = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
-        let dados = await resposta.json();
-
-        if (!Array.isArray(dados)) dados = [dados];
-
-        const encontrados = dados.filter(d =>
-          d.sku.includes(busca) ||
-          d.descricao.toLowerCase().includes(busca.toLowerCase()) ||
-          d.marca.toLowerCase().includes(busca.toLowerCase()) ||
-          d.gtin.includes(busca)
-        );
-
-        if (encontrados.length === 0) {
-          mensagem.textContent = "Nenhum resultado encontrado.";
-          return;
-        }
-
-        mensagem.textContent = "";
-        encontrados.forEach(p => {
-          const linha = `<tr>
-            <td>${p.sku}</td>
-            <td>${p.descricao}</td>
-            <td>${p.marca}</td>
-            <td>${p.gtin}</td>
-            <td>${p.estoque_nct}</td>
-            <td>${p.estoque_out}</td>
-            <td>${p.estoque_cd}</td>
-            <td>${p.estoque_ww}</td>
-            <td>${p.estoque_showroom_aqa}</td>
-          </tr>`;
-          resultado.innerHTML += linha;
-        });
-      } catch (erro) {
-        mensagem.textContent = "Erro ao buscar dados.";
-        console.error("Erro ao buscar dados:", erro);
-      }
+    input.addEventListener("keypress", function (e) {
+      if (e.key === "Enter") buscar();
     });
 
-    function limparBusca() {
-      inputBusca.value = "";
-      resultado.innerHTML = "";
-      mensagem.textContent = "";
-      inputBusca.focus();
+    limparBtn.addEventListener("click", function () {
+      input.value = "";
+      tabela.innerHTML = "";
+    });
+
+    function buscar() {
+      const termo = input.value.trim();
+      if (!termo) return;
+
+      fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${termo}`)
+        .then(res => res.json())
+        .then(data => {
+          tabela.innerHTML = ""; // Limpar antes de mostrar
+          if (!Array.isArray(data)) data = [data];
+
+          data.forEach(item => {
+            const linha = `
+              <tr>
+                <td>${item.sku}</td>
+                <td>${item.descricao}</td>
+                <td>${item.marca}</td>
+                <td>${item.gtin}</td>
+                <td>${item.estoque_nct}</td>
+                <td>${item.estoque_out}</td>
+                <td>${item.estoque_cd}</td>
+                <td>${item.estoque_ww}</td>
+                <td>${item.estoque_showroom_aqa}</td>
+              </tr>`;
+            tabela.innerHTML += linha;
+          });
+        })
+        .catch(err => {
+          console.error("Erro na consulta:", err);
+          tabela.innerHTML = `<tr><td colspan="9">Erro na busca</td></tr>`;
+        });
     }
   </script>
 </body>
