@@ -1,87 +1,36 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Consulta de Estoques - Equipe Interna</title>
   <style>
-    body {
-      background: #2e2e3a;
-      font-family: Arial, sans-serif;
-      color: white;
-      margin: 0;
-    }
-
-    header {
-      background: #f90;
-      padding: 20px;
-      text-align: center;
-    }
-
-    h1 {
-      text-align: center;
-      margin-top: 30px;
-    }
-
-    #busca {
-      display: block;
-      margin: 20px auto;
-      padding: 10px;
-      font-size: 18px;
-      width: 300px;
-    }
-
-    #limpar {
-      display: block;
-      margin: 10px auto;
-      padding: 10px 20px;
-      background: #f90;
-      border: none;
-      color: white;
-      font-weight: bold;
-      cursor: pointer;
-    }
-
-    table {
-      margin: 30px auto;
-      width: 90%;
-      border-collapse: collapse;
-      background: #fff;
-      color: #000;
-      border-radius: 8px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      text-align: center;
-      border: 1px solid #ccc;
-    }
-
-    th {
-      background: #ffcc00;
-    }
-
-    tr:nth-child(even) {
-      background: #f2f2f2;
-    }
-
-    tr:hover {
-      background: #ddd;
-    }
+    body { font-family: sans-serif; background: #2d2d3b; color: white; margin: 0; padding: 20px; text-align: center; }
+    .logo { margin-bottom: 20px; }
+    input { padding: 10px; width: 200px; font-size: 16px; }
+    button { padding: 10px 20px; margin-left: 10px; background-color: orange; color: white; border: none; cursor: pointer; }
+    table { margin: 20px auto; width: 90%; border-collapse: collapse; background: white; color: black; }
+    th, td { padding: 10px; border: 1px solid #ddd; }
+    th { background-color: #ffcc00; }
+    .loading, .no-result { margin-top: 20px; font-size: 18px; }
   </style>
 </head>
 <body>
+  <div class="logo">
+    <img src="https://www.nacontatotem.com.br/assets/img/logo.png" alt="Logo NCT" height="60">
+  </div>
 
-  <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/NCT_logo.svg/512px-NCT_logo.svg.png" alt="NCT" height="60">
-  </header>
+  <h2>Consulta de Estoques - Equipe Interna</h2>
 
-  <h1>Consulta de Estoques - Equipe Interna</h1>
+  <input type="text" id="busca" placeholder="Digite SKU ou GTIN" list="sugestoes" autocomplete="off" />
+  <datalist id="sugestoes"></datalist>
+  <button onclick="buscar()">Buscar</button>
+  <button onclick="limpar()">Limpar</button>
 
-  <input type="text" id="busca" placeholder="Digite o SKU ou GTIN" />
-  <button id="limpar">Limpar</button>
+  <div class="loading" id="loading" style="display:none;">Carregando...</div>
+  <div class="no-result" id="noResult" style="display:none;">Nenhum resultado encontrado</div>
 
-  <table>
+  <table id="resultado" style="display:none;">
     <thead>
       <tr>
         <th>SKU</th>
@@ -95,53 +44,56 @@
         <th>Showroom AQA</th>
       </tr>
     </thead>
-    <tbody id="tabela-corpo"></tbody>
+    <tbody id="resultadoBody"></tbody>
   </table>
 
   <script>
-    const input = document.getElementById("busca");
-    const limparBtn = document.getElementById("limpar");
-    const tabela = document.getElementById("tabela-corpo");
-
-    input.addEventListener("keypress", function (e) {
-      if (e.key === "Enter") buscar();
-    });
-
-    limparBtn.addEventListener("click", function () {
-      input.value = "";
-      tabela.innerHTML = "";
-    });
+    const endpoint = "https://n8n.rjduarte.com.br/webhook/consulta-estoques";
 
     function buscar() {
-      const termo = input.value.trim();
-      if (!termo) return;
+      const busca = document.getElementById("busca").value.trim();
+      if (!busca) return;
+      document.getElementById("loading").style.display = "block";
+      document.getElementById("noResult").style.display = "none";
+      document.getElementById("resultado").style.display = "none";
 
-      fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${termo}`)
-        .then(res => res.json())
+      fetch(`${endpoint}?busca=${busca}`)
+        .then(response => response.json())
         .then(data => {
-          tabela.innerHTML = ""; // Limpar antes de mostrar
-          if (!Array.isArray(data)) data = [data];
+          document.getElementById("loading").style.display = "none";
+          if (!data || Object.keys(data).length === 0) {
+            document.getElementById("noResult").style.display = "block";
+            return;
+          }
 
-          data.forEach(item => {
-            const linha = `
-              <tr>
-                <td>${item.sku}</td>
-                <td>${item.descricao}</td>
-                <td>${item.marca}</td>
-                <td>${item.gtin}</td>
-                <td>${item.estoque_nct}</td>
-                <td>${item.estoque_out}</td>
-                <td>${item.estoque_cd}</td>
-                <td>${item.estoque_ww}</td>
-                <td>${item.estoque_showroom_aqa}</td>
-              </tr>`;
-            tabela.innerHTML += linha;
-          });
+          const tbody = document.getElementById("resultadoBody");
+          tbody.innerHTML = "";
+
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${data.sku}</td>
+            <td>${data.descricao}</td>
+            <td>${data.marca}</td>
+            <td>${data.gtin}</td>
+            <td>${data.estoque_nct}</td>
+            <td>${data.estoque_out}</td>
+            <td>${data.estoque_cd}</td>
+            <td>${data.estoque_ww}</td>
+            <td>${data.estoque_showroom_aqa}</td>
+          `;
+          tbody.appendChild(row);
+          document.getElementById("resultado").style.display = "table";
         })
-        .catch(err => {
-          console.error("Erro na consulta:", err);
-          tabela.innerHTML = `<tr><td colspan="9">Erro na busca</td></tr>`;
+        .catch(() => {
+          document.getElementById("loading").style.display = "none";
+          document.getElementById("noResult").style.display = "block";
         });
+    }
+
+    function limpar() {
+      document.getElementById("busca").value = "";
+      document.getElementById("resultado").style.display = "none";
+      document.getElementById("noResult").style.display = "none";
     }
   </script>
 </body>
