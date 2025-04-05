@@ -20,35 +20,34 @@
       height: 60px;
     }
     main {
-      padding: 40px;
+      padding: 40px 20px;
     }
     h1 {
-      font-size: 32px;
+      font-size: 26px;
       margin-bottom: 20px;
     }
     input {
-      font-size: 18px;
-      padding: 10px;
-      width: 80%;
+      font-size: 20px;
+      padding: 12px;
+      width: 90%;
       max-width: 500px;
-      border-radius: 6px;
+      border-radius: 8px;
       border: none;
-      margin-bottom: 10px;
+      margin-bottom: 20px;
     }
     button {
-      padding: 8px 16px;
-      font-size: 14px;
-      margin-left: 8px;
-      border-radius: 6px;
+      margin-left: 10px;
+      padding: 12px 18px;
+      font-size: 16px;
       border: none;
+      border-radius: 6px;
+      background-color: #FF7F00;
+      color: white;
       cursor: pointer;
-      background-color: #FFD700;
-      color: #2F2F3D;
-      font-weight: 600;
     }
     table {
       width: 100%;
-      max-width: 95%;
+      max-width: 1000px;
       margin: 0 auto;
       border-collapse: collapse;
       margin-top: 20px;
@@ -57,6 +56,7 @@
     th, td {
       padding: 8px;
       border-bottom: 1px solid #555;
+      vertical-align: middle;
     }
     th {
       background-color: #FFD700;
@@ -66,25 +66,12 @@
       width: 60px;
       height: 60px;
       object-fit: contain;
+      border-radius: 8px;
       background-color: #fff;
-      border-radius: 6px;
     }
     #mensagem {
       margin-top: 20px;
-      font-size: 16px;
-      font-style: italic;
-    }
-    @media (max-width: 768px) {
-      input {
-        width: 95%;
-      }
-      table {
-        font-size: 12px;
-      }
-      img.produto-img {
-        width: 40px;
-        height: 40px;
-      }
+      font-size: 18px;
     }
   </style>
 </head>
@@ -94,14 +81,12 @@
   </header>
   <main>
     <h1>Consulta de Estoques - Equipe Interna</h1>
-    <input type="text" id="busca" placeholder="Digite nome, SKU, marca ou GTIN...">
+    <input type="text" id="busca" placeholder="Digite o nome, SKU, marca ou código de barras...">
     <button onclick="limparBusca()">Limpar</button>
-    <p id="loading" style="display:none;">🔄 Carregando...</p>
-    <p id="nenhum-resultado" style="display:none;">❌ Nenhum resultado encontrado.</p>
+    <div id="mensagem"></div>
     <table id="tabelaResultados">
       <thead>
         <tr>
-          <th>Foto</th>
           <th>SKU</th>
           <th>Descrição</th>
           <th>Marca</th>
@@ -117,63 +102,65 @@
     </table>
   </main>
   <script>
-    const input = document.getElementById('busca');
-    const resultado = document.getElementById('resultado');
-    const loading = document.getElementById('loading');
-    const nenhumResultado = document.getElementById('nenhum-resultado');
+    const inputBusca = document.getElementById("busca");
+    const resultado = document.getElementById("resultado");
+    const mensagem = document.getElementById("mensagem");
 
-    input.addEventListener('input', async () => {
-      const busca = input.value.trim().toLowerCase();
-      resultado.innerHTML = '';
-      loading.style.display = 'block';
-      nenhumResultado.style.display = 'none';
-
-      if (busca.length < 2) {
-        loading.style.display = 'none';
+    inputBusca.addEventListener("input", async function () {
+      const busca = inputBusca.value.trim();
+      if (busca.length < 3) {
+        resultado.innerHTML = "";
+        mensagem.textContent = "Digite ao menos 3 caracteres para buscar...";
         return;
       }
 
+      mensagem.textContent = "Carregando...";
+      resultado.innerHTML = "";
+
       try {
-        const res = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
-        const dados = await res.json();
+        const resposta = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
+        let dados = await resposta.json();
 
-        console.log("🔍 Dados recebidos do N8N:", dados);
+        if (!Array.isArray(dados)) dados = [dados];
 
-        loading.style.display = 'none';
+        const encontrados = dados.filter(d =>
+          d.sku.includes(busca) ||
+          d.descricao.toLowerCase().includes(busca.toLowerCase()) ||
+          d.marca.toLowerCase().includes(busca.toLowerCase()) ||
+          d.gtin.includes(busca)
+        );
 
-        if (!Array.isArray(dados) || dados.length === 0) {
-          nenhumResultado.style.display = 'block';
+        if (encontrados.length === 0) {
+          mensagem.textContent = "Nenhum resultado encontrado.";
           return;
         }
 
-        dados.forEach(p => {
+        mensagem.textContent = "";
+        encontrados.forEach(p => {
           const linha = `<tr>
-            <td><img src="https://via.placeholder.com/60x60?text=IMG" class="produto-img"></td>
-            <td>${p.sku || ''}</td>
-            <td>${p.descricao || ''}</td>
-            <td>${p.marca || ''}</td>
-            <td>${p.gtin || ''}</td>
-            <td>${p.estoque_nct || 0}</td>
-            <td>${p.estoque_out || 0}</td>
-            <td>${p.estoque_cd || 0}</td>
-            <td>${p.estoque_ww || 0}</td>
-            <td>${p.estoque_showroom_aqa || 0}</td>
+            <td>${p.sku}</td>
+            <td>${p.descricao}</td>
+            <td>${p.marca}</td>
+            <td>${p.gtin}</td>
+            <td>${p.estoque_nct}</td>
+            <td>${p.estoque_out}</td>
+            <td>${p.estoque_cd}</td>
+            <td>${p.estoque_ww}</td>
+            <td>${p.estoque_showroom_aqa}</td>
           </tr>`;
           resultado.innerHTML += linha;
         });
-
       } catch (erro) {
-        console.error("Erro ao buscar dados do Webhook:", erro);
-        loading.style.display = 'none';
-        nenhumResultado.style.display = 'block';
+        mensagem.textContent = "Erro ao buscar dados.";
+        console.error("Erro ao buscar dados:", erro);
       }
     });
 
     function limparBusca() {
-      input.value = '';
-      resultado.innerHTML = '';
-      loading.style.display = 'none';
-      nenhumResultado.style.display = 'none';
+      inputBusca.value = "";
+      resultado.innerHTML = "";
+      mensagem.textContent = "";
+      inputBusca.focus();
     }
   </script>
 </body>
