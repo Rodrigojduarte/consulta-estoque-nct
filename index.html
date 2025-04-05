@@ -23,22 +23,22 @@
       padding: 40px;
     }
     h1 {
-      font-size: 36px;
-      margin-bottom: 30px;
+      font-size: 32px;
+      margin-bottom: 20px;
     }
     input {
-      font-size: 20px;
+      font-size: 18px;
       padding: 10px;
       width: 80%;
       max-width: 500px;
-      border-radius: 8px;
+      border-radius: 6px;
       border: none;
-      margin-bottom: 20px;
+      margin-bottom: 10px;
     }
     button {
-      padding: 10px 16px;
+      padding: 8px 16px;
       font-size: 14px;
-      margin-left: 10px;
+      margin-left: 8px;
       border-radius: 6px;
       border: none;
       cursor: pointer;
@@ -63,8 +63,8 @@
       color: #2F2F3D;
     }
     img.produto-img {
-      width: 70px;
-      height: 70px;
+      width: 60px;
+      height: 60px;
       object-fit: contain;
       background-color: #fff;
       border-radius: 6px;
@@ -82,8 +82,8 @@
         font-size: 12px;
       }
       img.produto-img {
-        width: 50px;
-        height: 50px;
+        width: 40px;
+        height: 40px;
       }
     }
   </style>
@@ -137,39 +137,22 @@
         const res = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(busca)}`);
         const dados = await res.json();
 
+        console.log("🔍 Dados recebidos do N8N:", dados);
+
         loading.style.display = 'none';
 
-        const palavras = busca.split(/\s+/);
-        const isNumerico = /^\d+$/.test(busca) && busca.length < 13;
-
-        const filtrados = dados.filter(p => {
-          const descricao = (p.descricao || '').toLowerCase();
-          const marca = (p.marca || '').toLowerCase();
-          const gtin = p.gtin || '';
-          const sku = p.sku || '';
-
-          if (isNumerico) return sku.includes(busca);
-
-          return (
-            palavras.every(palavra => descricao.includes(palavra)) ||
-            marca.includes(busca) ||
-            gtin.includes(busca) ||
-            sku.includes(busca)
-          );
-        });
-
-        if (filtrados.length === 0) {
+        if (!Array.isArray(dados) || dados.length === 0) {
           nenhumResultado.style.display = 'block';
           return;
         }
 
-        filtrados.forEach(p => {
+        dados.forEach(p => {
           const linha = `<tr>
-            <td><img src="https://via.placeholder.com/70x70?text=IMG" class="produto-img"></td>
-            <td>${p.sku}</td>
-            <td>${p.descricao}</td>
-            <td>${p.marca}</td>
-            <td>${p.gtin}</td>
+            <td><img src="https://via.placeholder.com/60x60?text=IMG" class="produto-img"></td>
+            <td>${p.sku || ''}</td>
+            <td>${p.descricao || ''}</td>
+            <td>${p.marca || ''}</td>
+            <td>${p.gtin || ''}</td>
             <td>${p.estoque_nct || 0}</td>
             <td>${p.estoque_out || 0}</td>
             <td>${p.estoque_cd || 0}</td>
@@ -180,7 +163,7 @@
         });
 
       } catch (erro) {
-        console.error("Erro ao buscar dados:", erro);
+        console.error("Erro ao buscar dados do Webhook:", erro);
         loading.style.display = 'none';
         nenhumResultado.style.display = 'block';
       }
