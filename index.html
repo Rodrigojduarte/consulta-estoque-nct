@@ -1,226 +1,186 @@
 <!DOCTYPE html>
 <html lang="pt-br">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Consulta de Estoques - Equipe Interna</title>
-    <style>
-      body {
-        font-family: Arial, sans-serif;
-        margin: 0;
-        background-color: #f3f3f3;
-        color: #333;
-        padding: 0 1rem;
-      }
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Consulta de Estoques - Equipe Interna</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f3f3f3;
+      color: #333;
+    }
 
-      header {
-        background-color: #20232a;
-        color: white;
-        padding: 1rem;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-      }
+    header {
+      background-color: #1f1f1f;
+      color: white;
+      padding: 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
 
-      header img {
-        height: 50px;
-      }
+    header img {
+      height: 50px;
+    }
 
-      header h1 {
-        font-size: 1.5rem;
-        margin: 0;
-        flex: 1;
-        text-align: center;
-      }
+    header h1 {
+      font-size: 1.8rem;
+      margin: 0 auto;
+    }
 
-      #search-section {
-        margin: 2rem 0;
-        text-align: center;
-      }
+    #search-section {
+      margin: 2rem auto;
+      text-align: center;
+    }
 
-      #search-input {
-        padding: 0.8rem;
-        width: 90%;
-        max-width: 500px;
-        font-size: 1rem;
-      }
+    #search-input {
+      padding: 0.8rem;
+      width: 90%;
+      max-width: 600px;
+      font-size: 1rem;
+    }
 
-      #clear-btn {
-        margin-left: 10px;
-        padding: 0.8rem 1rem;
-        font-size: 1rem;
-        cursor: pointer;
-      }
+    #clear-btn {
+      padding: 0.8rem 1rem;
+      font-size: 1rem;
+      margin-left: 10px;
+      background-color: #ff9900;
+      border: none;
+      color: white;
+      cursor: pointer;
+    }
 
-      #status-message {
-        text-align: center;
-        margin-top: 1rem;
-        font-weight: bold;
-        color: #555;
-      }
+    table {
+      width: 95%;
+      margin: 2rem auto;
+      border-collapse: collapse;
+      font-size: 0.95rem;
+    }
 
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 1.5rem;
-        overflow-x: auto;
-      }
+    th, td {
+      padding: 0.6rem;
+      border: 1px solid #ccc;
+      text-align: center;
+    }
 
-      th,
-      td {
-        border: 1px solid #ccc;
-        padding: 0.6rem;
-        text-align: center;
-      }
+    th {
+      background-color: #333;
+      color: white;
+    }
 
-      th {
-        background-color: #f0f0f0;
-      }
+    tr:nth-child(even) {
+      background-color: #f2f2f2;
+    }
 
-      tr:hover {
-        background-color: #e0f7fa;
-      }
+    #status-message {
+      text-align: center;
+      font-weight: bold;
+      margin-top: 1rem;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo" />
+    <h1>Consulta de Estoques</h1>
+    <div></div>
+  </header>
 
-      @media (max-width: 600px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
+  <section id="search-section">
+    <input type="text" id="search-input" placeholder="Digite nome, SKU ou código de barras" list="suggestions" />
+    <button id="clear-btn">Limpar busca</button>
+    <datalist id="suggestions"></datalist>
+    <div id="status-message"></div>
+  </section>
+
+  <table id="results-table" style="display: none;">
+    <thead>
+      <tr>
+        <th>SKU</th>
+        <th>Produto</th>
+        <th>Marca</th>
+        <th>Código de Barras</th>
+        <th>NCT AQA</th>
+        <th>NCT OUT</th>
+        <th>CD Américo</th>
+        <th>WeWork</th>
+        <th>Showroom</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    const input = document.getElementById("search-input");
+    const clearBtn = document.getElementById("clear-btn");
+    const table = document.getElementById("results-table");
+    const tbody = table.querySelector("tbody");
+    const statusMessage = document.getElementById("status-message");
+    const suggestions = document.getElementById("suggestions");
+
+    let debounceTimer;
+
+    async function buscarDados(query) {
+      if (!query) return;
+      statusMessage.textContent = "Carregando...";
+      table.style.display = "none";
+      tbody.innerHTML = "";
+      suggestions.innerHTML = "";
+
+      try {
+        const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(query)}`);
+        const data = await response.json();
+
+        if (!Array.isArray(data) || data.length === 0) {
+          statusMessage.textContent = "Nenhum resultado encontrado.";
+          return;
         }
 
-        th {
-          display: none;
-        }
-
-        td {
-          position: relative;
-          padding-left: 50%;
-          text-align: left;
-        }
-
-        td::before {
-          content: attr(data-label);
-          position: absolute;
-          left: 0;
-          width: 45%;
-          padding-left: 1rem;
-          font-weight: bold;
-          white-space: nowrap;
-        }
-      }
-    </style>
-  </head>
-  <body>
-    <header>
-      <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo" />
-      <h1>Consulta de Estoques</h1>
-    </header>
-
-    <section id="search-section">
-      <input
-        type="text"
-        id="search-input"
-        placeholder="Digite o nome, SKU ou código de barras..."
-        list="suggestions"
-      />
-      <button id="clear-btn">Limpar busca</button>
-      <datalist id="suggestions"></datalist>
-      <div id="status-message"></div>
-    </section>
-
-    <table id="results-table" style="display: none">
-      <thead>
-        <tr>
-          <th>SKU</th>
-          <th>Produto</th>
-          <th>Marca</th>
-          <th>Código de Barras</th>
-          <th>NCT AQA</th>
-          <th>NCT OUT</th>
-          <th>CD Américo</th>
-          <th>WeWork</th>
-          <th>Showroom</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <script>
-      const input = document.getElementById("search-input");
-      const clearBtn = document.getElementById("clear-btn");
-      const table = document.getElementById("results-table");
-      const tbody = table.querySelector("tbody");
-      const statusMessage = document.getElementById("status-message");
-      const suggestions = document.getElementById("suggestions");
-
-      let debounceTimer;
-
-      async function buscarDados(query) {
-        if (!query) return;
-
-        statusMessage.textContent = "Carregando...";
-        table.style.display = "none";
-        tbody.innerHTML = "";
-        suggestions.innerHTML = "";
-
-        try {
-          const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(query)}`);
-          const data = await response.json();
-
-          if (!Array.isArray(data) || data.length === 0) {
-            statusMessage.textContent = "Nenhum resultado encontrado.";
-            return;
-          }
-
-          statusMessage.textContent = "";
-          table.style.display = "table";
-
-          data.forEach(item => {
-            const row = document.createElement("tr");
-
-            row.innerHTML = `
-              <td data-label="SKU">${item.sku ?? ''}</td>
-              <td data-label="Produto">${item.nome ?? ''}</td>
-              <td data-label="Marca">${item.marca ?? ''}</td>
-              <td data-label="Código de Barras">${item.codigobarra ?? ''}</td>
-              <td data-label="NCT AQA">${item.estoque?.nctaqa ?? 0}</td>
-              <td data-label="NCT OUT">${item.estoque?.nctout ?? 0}</td>
-              <td data-label="CD Américo">${item.estoque?.cdaco ?? 0}</td>
-              <td data-label="WeWork">${item.estoque?.wework ?? 0}</td>
-              <td data-label="Showroom">${item.estoque?.showroom ?? 0}</td>
-            `;
-
-            tbody.appendChild(row);
-
-            const option = document.createElement("option");
-            option.value = `${item.sku} - ${item.nome}`;
-            suggestions.appendChild(option);
-          });
-        } catch (error) {
-          statusMessage.textContent = "Erro ao buscar os dados.";
-          console.error(error);
-        }
-      }
-
-      input.addEventListener("input", () => {
-        clearTimeout(debounceTimer);
-        const valor = input.value.trim();
-
-        if (valor.length >= 3) {
-          debounceTimer = setTimeout(() => buscarDados(valor), 300);
-        }
-      });
-
-      clearBtn.addEventListener("click", () => {
-        input.value = "";
-        tbody.innerHTML = "";
-        table.style.display = "none";
         statusMessage.textContent = "";
-      });
-    </script>
-  </body>
+        table.style.display = "table";
+
+        data.forEach(item => {
+          const d = item.json || {};
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${d.sku || ""}</td>
+            <td>${d.descricao || ""}</td>
+            <td>${d.marca || ""}</td>
+            <td>${d.codigobarra || ""}</td>
+            <td>${d.nctaqa ?? 0}</td>
+            <td>${d.nctout ?? 0}</td>
+            <td>${d.cdaco ?? 0}</td>
+            <td>${d.wework ?? 0}</td>
+            <td>${d.showroom ?? 0}</td>
+          `;
+          tbody.appendChild(row);
+
+          const opt = document.createElement("option");
+          opt.value = `${d.sku} - ${d.descricao}`;
+          suggestions.appendChild(opt);
+        });
+      } catch (error) {
+        statusMessage.textContent = "Erro ao buscar os dados.";
+        console.error(error);
+      }
+    }
+
+    input.addEventListener("input", () => {
+      clearTimeout(debounceTimer);
+      const valor = input.value.trim();
+      if (valor.length >= 3) {
+        debounceTimer = setTimeout(() => buscarDados(valor), 300);
+      }
+    });
+
+    clearBtn.addEventListener("click", () => {
+      input.value = "";
+      tbody.innerHTML = "";
+      table.style.display = "none";
+      statusMessage.textContent = "";
+    });
+  </script>
+</body>
 </html>
