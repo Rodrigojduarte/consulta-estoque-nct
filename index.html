@@ -162,7 +162,7 @@
         tbody.innerHTML = "";
 
         try {
-          const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta_estoques?busca=${encodeURIComponent(query)}`)
+          const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(query)}`)
           const data = await response.json();
 
           if (data.length === 0) {
