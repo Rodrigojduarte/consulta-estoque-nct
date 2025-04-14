@@ -5,18 +5,34 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Consulta de Estoques - Equipe Interna</title>
     <style>
+      :root {
+        --primary: #20232a;
+        --accent: #ff8800;
+        --background: #f9f9f9;
+        --header-bg: #1f1f1f;
+        --text-color: #333;
+        --zebra-light: #ffffff;
+        --zebra-dark: #f1f1f1;
+        --stock-ok: #d4edda;
+        --stock-zero: #f8d7da;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
       body {
-        font-family: Arial, sans-serif;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        background-color: var(--background);
+        color: var(--text-color);
         margin: 0;
-        background-color: #f3f3f3;
-        color: #333;
         padding: 0 1rem;
       }
 
       header {
-        background-color: #20232a;
+        background-color: var(--header-bg);
         color: white;
-        padding: 1rem;
+        padding: 1rem 2rem;
         display: flex;
         align-items: center;
         justify-content: space-between;
@@ -28,29 +44,39 @@
       }
 
       header h1 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         margin: 0;
         flex: 1;
         text-align: center;
       }
 
       #search-section {
-        margin: 2rem 0;
+        margin: 2rem 0 1rem;
         text-align: center;
       }
 
       #search-input {
-        padding: 0.8rem;
+        padding: 0.9rem;
         width: 90%;
         max-width: 500px;
         font-size: 1rem;
+        border-radius: 5px;
+        border: 1px solid #ccc;
       }
 
       #clear-btn {
         margin-left: 10px;
-        padding: 0.8rem 1rem;
+        padding: 0.9rem 1.2rem;
         font-size: 1rem;
+        background-color: var(--accent);
+        color: white;
+        border: none;
         cursor: pointer;
+        border-radius: 5px;
+      }
+
+      #clear-btn:hover {
+        background-color: #e27000;
       }
 
       #status-message {
@@ -64,59 +90,53 @@
         width: 100%;
         border-collapse: collapse;
         margin-top: 1.5rem;
-        overflow-x: auto;
       }
 
-      th,
-      td {
-        border: 1px solid #ccc;
-        padding: 0.6rem;
+      th, td {
+        border: 1px solid #ddd;
+        padding: 0.8rem;
         text-align: center;
       }
 
       th {
-        background-color: #f0f0f0;
+        background-color: var(--header-bg);
+        color: white;
+        position: sticky;
+        top: 0;
+        z-index: 1;
       }
 
-      tr:hover {
-        background-color: #e0f7fa;
+      tr:nth-child(even) {
+        background-color: var(--zebra-dark);
       }
 
-      @media (max-width: 600px) {
-        table,
-        thead,
-        tbody,
-        th,
-        td,
-        tr {
-          display: block;
+      tr:nth-child(odd) {
+        background-color: var(--zebra-light);
+      }
+
+      td[data-stock="0"] {
+        background-color: var(--stock-zero);
+      }
+
+      td[data-stock]:not([data-stock="0"]) {
+        background-color: var(--stock-ok);
+      }
+
+      @media (max-width: 768px) {
+        th, td {
+          font-size: 0.9rem;
+          padding: 0.5rem;
         }
 
-        th {
-          display: none;
-        }
-
-        td {
-          position: relative;
-          padding-left: 50%;
-          text-align: left;
-        }
-
-        td::before {
-          content: attr(data-label);
-          position: absolute;
-          left: 0;
-          width: 45%;
-          padding-left: 1rem;
-          font-weight: bold;
-          white-space: nowrap;
+        #search-input {
+          width: 80%;
         }
       }
     </style>
   </head>
   <body>
     <header>
-      <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo" />
+      <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo NCT" />
       <h1>Consulta de Estoques</h1>
     </header>
 
@@ -156,7 +176,6 @@
       const tbody = table.querySelector("tbody");
       const statusMessage = document.getElementById("status-message");
       const suggestions = document.getElementById("suggestions");
-
       let debounceTimer;
 
       async function buscarDados(query) {
@@ -165,7 +184,6 @@
         statusMessage.textContent = "Carregando...";
         table.style.display = "none";
         tbody.innerHTML = "";
-        suggestions.innerHTML = "";
 
         try {
           const response = await fetch(`https://n8n.rjduarte.com.br/webhook/consulta-estoques?busca=${encodeURIComponent(query)}`);
@@ -181,23 +199,21 @@
 
           data.forEach(item => {
             const row = document.createElement("tr");
-
             row.innerHTML = `
-              <td data-label="SKU">${item.sku ?? ''}</td>
-              <td data-label="Produto">${item.nome ?? ''}</td>
-              <td data-label="Marca">${item.marca ?? ''}</td>
-              <td data-label="Código de Barras">${item.codigobarra ?? ''}</td>
-              <td data-label="NCT AQA">${item.estoque?.nctaqa ?? 0}</td>
-              <td data-label="NCT OUT">${item.estoque?.nctout ?? 0}</td>
-              <td data-label="CD Américo">${item.estoque?.cdaco ?? 0}</td>
-              <td data-label="WeWork">${item.estoque?.wework ?? 0}</td>
-              <td data-label="Showroom">${item.estoque?.showroom ?? 0}</td>
+              <td>${item.sku}</td>
+              <td>${item.descricao || 'undefined'}</td>
+              <td>${item.marca || 'undefined'}</td>
+              <td>${item.codigobarra || 'undefined'}</td>
+              <td data-stock="${item.nctaqa}">${item.nctaqa ?? '0'}</td>
+              <td data-stock="${item.nctout}">${item.nctout ?? '0'}</td>
+              <td data-stock="${item.cdaco}">${item.cdaco ?? '0'}</td>
+              <td data-stock="${item.wework}">${item.wework ?? '0'}</td>
+              <td data-stock="${item.showroom}">${item.showroom ?? '0'}</td>
             `;
-
             tbody.appendChild(row);
 
             const option = document.createElement("option");
-            option.value = `${item.sku} - ${item.nome}`;
+            option.value = `${item.sku} - ${item.descricao}`;
             suggestions.appendChild(option);
           });
         } catch (error) {
@@ -209,7 +225,6 @@
       input.addEventListener("input", () => {
         clearTimeout(debounceTimer);
         const valor = input.value.trim();
-
         if (valor.length >= 3) {
           debounceTimer = setTimeout(() => buscarDados(valor), 300);
         }
