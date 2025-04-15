@@ -46,6 +46,7 @@
         font-size: 1rem;
       }
 
+      #search-btn,
       #clear-btn {
         margin-left: 10px;
         padding: 0.8rem 1rem;
@@ -127,6 +128,7 @@
         placeholder="Digite o nome, SKU ou código de barras..."
         list="suggestions"
       />
+      <button id="search-btn">Pesquisar</button>
       <button id="clear-btn">Limpar busca</button>
       <datalist id="suggestions"></datalist>
       <div id="status-message"></div>
@@ -152,12 +154,11 @@
     <script>
       const input = document.getElementById("search-input");
       const clearBtn = document.getElementById("clear-btn");
+      const searchBtn = document.getElementById("search-btn");
       const table = document.getElementById("results-table");
       const tbody = table.querySelector("tbody");
       const statusMessage = document.getElementById("status-message");
       const suggestions = document.getElementById("suggestions");
-
-      let debounceTimer;
 
       async function buscarDados(query) {
         if (!query) return;
@@ -206,12 +207,14 @@
         }
       }
 
-      input.addEventListener("input", () => {
-        clearTimeout(debounceTimer);
+      searchBtn.addEventListener("click", () => {
         const valor = input.value.trim();
-
         if (valor.length >= 3) {
-          debounceTimer = setTimeout(() => buscarDados(valor), 300);
+          buscarDados(valor);
+        } else {
+          statusMessage.textContent = "Digite pelo menos 3 caracteres.";
+          table.style.display = "none";
+          tbody.innerHTML = "";
         }
       });
 
