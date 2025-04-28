@@ -172,6 +172,7 @@
           <th>Produto</th>
           <th>Marca</th>
           <th>Código de Barras</th>
+          <th>Preço Venda</th>
           <th>NCT AQA</th>
           <th>NCT OUT</th>
           <th>CD Américo</th>
@@ -219,6 +220,7 @@
               <td data-label="Produto">${item.nome ?? ''}</td>
               <td data-label="Marca">${item.marca ?? ''}</td>
               <td data-label="Código de Barras">${item.codigobarra ?? ''}</td>
+              <td data-label="Preço Venda">${item.preco_nct !== undefined ? `R$ ${parseFloat(item.preco_nct).toFixed(2)}` : ''}</td>
               <td data-label="NCT AQA">${item.estoque?.nctaqa ?? 0}</td>
               <td data-label="NCT OUT">${item.estoque?.nctout ?? 0}</td>
               <td data-label="CD Américo">${item.estoque?.cdaco ?? 0}</td>
