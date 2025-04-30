@@ -12,6 +12,7 @@
       color: #333;
       padding: 0 1rem;
     }
+
     header {
       background-color: #003366;
       color: white;
@@ -21,19 +22,23 @@
       justify-content: space-between;
       flex-wrap: wrap;
     }
+
     header img {
       height: 50px;
     }
+
     header h1 {
       font-size: 1.8rem;
       margin: 0;
       flex: 1;
       text-align: center;
     }
+
     #search-section {
       margin: 2rem 0;
       text-align: center;
     }
+
     #search-input {
       padding: 0.8rem;
       width: 90%;
@@ -42,6 +47,7 @@
       border: 1px solid #ccc;
       border-radius: 5px;
     }
+
     #search-btn,
     #clear-btn {
       margin-left: 10px;
@@ -52,26 +58,32 @@
       cursor: pointer;
       transition: 0.3s ease;
     }
+
     #search-btn {
       background-color: #0066cc;
       color: white;
     }
+
     #search-btn:hover {
       background-color: #005bb5;
     }
+
     #clear-btn {
       background-color: #cccccc;
       color: #333;
     }
+
     #clear-btn:hover {
       background-color: #bbbbbb;
     }
+
     #status-message {
       text-align: center;
       margin-top: 1rem;
       font-weight: bold;
       color: #444;
     }
+
     table {
       width: 100%;
       border-collapse: collapse;
@@ -81,38 +93,47 @@
       border-radius: 6px;
       overflow: hidden;
     }
+
     th, td {
       border: 1px solid #e0e0e0;
       padding: 0.6rem;
       text-align: center;
     }
+
     th {
       background-color: #007acc;
       color: white;
     }
+
     tr:nth-child(even) {
       background-color: #f9f9f9;
     }
+
     tr:hover {
       background-color: #e1f5fe;
     }
+
     .preco-cell {
       background-color: #f5f5f5;
       text-align: right;
       font-weight: bold;
     }
+
     @media (max-width: 600px) {
       table, thead, tbody, th, td, tr {
         display: block;
       }
+
       th {
         display: none;
       }
+
       td {
         position: relative;
         padding-left: 50%;
         text-align: left;
       }
+
       td::before {
         content: attr(data-label);
         position: absolute;
@@ -125,7 +146,6 @@
     }
   </style>
 </head>
-
 <body>
   <header>
     <img src="https://www.nacontatotem.com.br/pub/media/codazon/logo/56/default/logo.png" alt="Logo" />
@@ -169,6 +189,7 @@
 
     async function buscarDados(query) {
       if (!query) return;
+
       statusMessage.textContent = "Carregando...";
       table.style.display = "none";
       tbody.innerHTML = "";
@@ -188,20 +209,20 @@
 
         data.forEach(item => {
           const row = document.createElement("tr");
+
           row.innerHTML = `
             <td data-label="SKU">${item.sku ?? ''}</td>
             <td data-label="Produto">${item.nome ?? ''}</td>
             <td data-label="Marca">${item.marca ?? ''}</td>
             <td data-label="Código de Barras">${item.codigobarra ?? ''}</td>
-            <td data-label="Preço Venda" class="preco-cell">
-              ${item.preco_nct !== undefined ? item.preco_nct.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : ''}
-            </td>
+            <td data-label="Preço Venda" class="preco-cell">${item.preco ?? ''}</td>
             <td data-label="NCT AQA">${item.estoque?.nctaqa ?? 0}</td>
             <td data-label="NCT OUT">${item.estoque?.nctout ?? 0}</td>
             <td data-label="CD Américo">${item.estoque?.cdaco ?? 0}</td>
             <td data-label="WeWork">${item.estoque?.wework ?? 0}</td>
             <td data-label="Showroom">${item.estoque?.showroom ?? 0}</td>
           `;
+
           tbody.appendChild(row);
 
           const option = document.createElement("option");
